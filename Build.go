@@ -11,20 +11,12 @@ import (
 
 type Runner struct{}
 
-func (r Runner) Setup() {
-	log.Println("[BUILD] Setup: started")
+func (r Runner) Game() {
+	log.Println("[BUILD] Game: started")
 
 	if err := os.MkdirAll("Build", 0755); err != nil {
 		log.Fatalf("[BUILD] Error: failed to create Build directory: %v", err)
 	}
-
-	log.Println("[BUILD] Setup: succeeded")
-}
-
-func (r Runner) Game() {
-	r.Setup()
-
-	log.Println("[BUILD] Game: started")
 
 	dirs := []string{"Sources/Game"}
 	files := []string{}
