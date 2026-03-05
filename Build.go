@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 type Runner struct{}
@@ -32,7 +33,10 @@ func (r Runner) Game() {
 		})
 	}
 
-	cmd := exec.Command("hc", append([]string{"--import-builtin", "-o", "Build/Game", "--verbose", "-O"}, files...)...)
+	libs := []string{}
+	libs = append(libs, findLib("SDL3")...)
+
+	cmd := exec.Command("hc", append(append([]string{"--import-builtin", "-o", "Build/Game", "--verbose", "-O"}, libs...), files...)...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -52,4 +56,22 @@ func main() {
 		log.Fatalf("[BUILD] Error: unknown target %q", os.Args[1])
 	}
 	method.Call(nil)
+}
+
+func findLib(name string) []string {
+	pkgOut, err := exec.Command("pkg-config", "--libs-only-L", "--libs-only-l", name).Output()
+	if err != nil {
+		log.Fatalf("[BUILD] Error: pkg-config %s failed: %v", name, err)
+	}
+	pkgFlags := []string{}
+	for _, f := range strings.Fields(string(pkgOut)) {
+		if strings.HasPrefix(f, "-L") {
+			pkgFlags = append(pkgFlags, "-L", f[2:])
+		} else if strings.HasPrefix(f, "-l") {
+			pkgFlags = append(pkgFlags, "-l", f[2:])
+		} else {
+			pkgFlags = append(pkgFlags, f)
+		}
+	}
+	return pkgFlags
 }
